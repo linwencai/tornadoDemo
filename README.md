@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-2&3-blue.svg)](https://www.python.org/)
 [![Tornado](https://img.shields.io/badge/Firefy-1.3-yellowgreen.svg)](https://github.com/tornadoweb/tornado)
 
-tornadoDemo是一个web服务端demo，基于[tornado](https://github.com/tornadoweb/tornado) 框架，异步非阻塞，支持线上编辑代码并热更
+tornadoDemo是一个web服务端demo，基于[tornado](https://github.com/tornadoweb/tornado) 框架，异步非阻塞，支持线上编辑代码热更
 
 --------
 
@@ -42,11 +42,10 @@ tornadoDemo是一个web服务端demo，基于[tornado](https://github.com/tornad
 
 
 ## 快速开始
-1. 编辑config目录下conf.py，配置端口
-2. 运行服务端
+1. 运行服务端
   ```
   >>> python main.py
   ```
-
+2. 用浏览器打开http://127.0.0.1:8000，帐号密码都是admin
 
  :relaxed:
