@@ -44,7 +44,7 @@ tornadoDemo是一个web服务端demo，基于[tornado](https://github.com/tornad
 ## 快速开始
 1. 运行服务端
   ```
-  >>> python main.py
+  python main.py
   ```
 2. 用浏览器打开http://127.0.0.1:8000
 
