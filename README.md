@@ -10,7 +10,7 @@ tornadoDemo是一个web服务端demo，基于[tornado](https://github.com/tornad
 
 ## 环境
 * Python2.7 or Python3
-* 生产环境建议使用CentOS Python3 nginx supervisor
+* 生产环境建议使用CentOS+Python3+nginx+supervisor
 
 ## 依赖
 * tornado
@@ -34,8 +34,11 @@ tornadoDemo是一个web服务端demo，基于[tornado](https://github.com/tornad
   pip install tornado
   pip install psutil
   pip install pycryptodome
+  ```
 
-  # 如果是python2
+* 如果是python2
+
+  ```
   pip install futures
   pip install importlib
   ```
@@ -44,9 +47,10 @@ tornadoDemo是一个web服务端demo，基于[tornado](https://github.com/tornad
 ## 快速开始
 1. 运行服务端
 
-  ```
-  python main.py
-  ```
+    ```
+    python main.py
+    ```
+
 2. 用浏览器打开http://127.0.0.1:8000
 
    默认帐号密码都是admin
