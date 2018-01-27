@@ -1,0 +1,357 @@
+{% extends "index.html" %}
+{% block css %}
+<link rel="stylesheet" href="{{ static_url('css/jquery-ui.css') }}">
+<link href="{{ static_url('codemirror/lib/codemirror.css') }}" rel="stylesheet">
+<link href="{{ static_url('codemirror/theme/monokai.css') }}" rel="stylesheet">
+<link href="{{ static_url('codemirror/addon/display/fullscreen.css') }}" rel="stylesheet">
+<link href="{{ static_url('codemirror/addon/fold/foldgutter.css') }}" rel="stylesheet">
+<link href="{{ static_url('codemirror/addon/merge/merge.css') }}" rel="stylesheet">
+<!--编辑框样式-->
+<style type="text/css">
+/* 编辑框样式 */
+.CodeMirror {
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  line-height: 1.3;
+  height: 700px;
+  line-height: {{ lineHeight }}px;  /* 在mergely.js之后才会生效 */
+  font-size: {{ fontSize }}px;
+  font-family:"Lucida Console", Monaco, monospace;
+  /*font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;*/
+}
+
+/* 对比框样式，逗号不能少。。。*/
+.CodeMirror-merge, .CodeMirror-merge .CodeMirror {
+  height: 700px;
+  line-height: 18px;
+  font-size: 14px;
+  font-family:"Lucida Console", Monaco, monospace;
+}
+
+/* tab显示为箭头 */
+.cm-tab {
+  /* 黑色箭头 */
+  /* background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAMCAYAAAAkuj5RAAAAAXNSR0IArs4c6QAAAGFJREFUSMft1LsRQFAQheHPowAKoACx3IgEKtaEHujDjORSgWTH/ZOdnZOcM/sgk/kFFWY0qV8foQwS4MKBCS3qR6ixBJvElOobYAtivseIE120FaowJPN75GMu8j/LfMwNjh4HUpwg4LUAAAAASUVORK5CYII=); */
+  /* 灰色箭头 */
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAMCAYAAAAkuj5RAAAAQklEQVR42mNgGAWjYEQA5kuXLv0H0gIgDpQ95IAS1OGCKB4AcYYiHooxIAd1uNFQ9AAsD5gM5TwAAoyj5dkooDIAAB0Yu30CvwHLAAAAAElFTkSuQmCC);
+  background-position: right;
+  background-repeat: no-repeat;
+}
+
+/* 相同单词高亮 */
+.CodeMirror-focused .cm-matchhighlight {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
+  background-position: bottom;
+  background-repeat: repeat-x;
+  /* border:1px solid #00CC66; */
+}
+/*.cm-matchhighlight {background-color: #006666}*/
+.CodeMirror-selection-highlight-scrollbar {background-color: green}
+</style>
+
+{% end %}
+
+{% block js %}
+<script src="{{ static_url('js/jquery-ui.js') }}"></script>
+<script src="{{ static_url('codemirror/lib/codemirror.js') }}"></script>
+<script src="{{ static_url('codemirror/mode/javascript/javascript.js') }}"></script>
+<script src="{{ static_url('codemirror/mode/python/python.js') }}"></script>
+<script src="{{ static_url('codemirror/mode/htmlmixed/htmlmixed.js') }}"></script>
+<!--<script src="{{ static_url('codemirror/mode/jinja2/jinja2.js') }}"></script>-->
+<script src="{{ static_url('codemirror/mode/css/css.js') }}"></script>
+<script src="{{ static_url('codemirror/mode/xml/xml.js') }}"></script>
+<script src="{{ static_url('codemirror/mode/scheme/scheme.js') }}"></script>
+
+<!--f11全屏-->
+<script src="{{ static_url('codemirror/addon/display/fullscreen.js') }}"></script>
+
+<!--alt-g跳转到指定行-->
+<script src="{{ static_url('codemirror/addon/search/jump-to-line.js') }}"></script>
+
+<!--光标的行高亮-->
+<script src="{{ static_url('codemirror/addon/selection/active-line.js') }}"></script>
+
+<!--匹配空格-->
+<script src="{{ static_url('codemirror/addon/edit/closebrackets.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/edit/matchbrackets.js') }}"></script>
+
+<!--代码折叠-->
+<script src="{{ static_url('codemirror/addon/fold/foldcode.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/fold/foldgutter.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/fold/brace-fold.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/fold/xml-fold.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/fold/indent-fold.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/fold/markdown-fold.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/fold/comment-fold.js') }}"></script>
+
+<!--匹配单词高亮-->
+<script src="{{ static_url('codemirror/addon/scroll/annotatescrollbar.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/search/matchesonscrollbar.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/search/searchcursor.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/search/match-highlighter.js') }}"></script>
+
+<!--对比-->
+<script src="{{ static_url('codemirror/lib/diff_match_patch.js') }}"></script>
+<script src="{{ static_url('codemirror/addon/merge/merge.js') }}"></script>
+<script>
+// 模块路径提示
+$(function() {
+  var availableTags = {% raw pathList %};
+  $( "#path" ).autocomplete({
+    source: availableTags
+  });
+});
+
+
+// 编辑
+var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+  lineNumbers: true,
+  {% if path.lower().endswith(".py") %}
+    mode: {name: "python", version: 3, singleLineStringErrors: false},
+  {% elif path.lower().endswith(".css") %}
+    mode: "text/css",
+  {% elif path.lower().endswith(".html") %}
+    // mode: {name: "jinja2", htmlMode: true},
+    mode: {
+        name: "htmlmixed",
+        scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,
+                       mode: null},
+                      {matches: /(text|application)\/(x-)?vb(a|script)/i,
+                       mode: "vbscript"}]
+      },
+  {% elif path.lower().endswith(".js") %}
+    // mode: "javascript",
+  {% else %}
+    // mode:"scheme",
+    mode: "python",
+  {% end %}
+
+  matchBrackets: true,  // 匹配括号
+  autoCloseBrackets: true,  // 括号组合（自动添加右括号）
+  theme: "monokai",
+  styleActiveLine: true,  // 光标行高亮
+  highlightSelectionMatches: {showToken: /\w/, annotateScrollbar: true},
+
+  // 折叠代码
+  foldGutter: true,
+  gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+
+  // 自定义快捷键
+  extraKeys: {
+
+    // 全屏
+    "F11": function(cm) {
+      //$("#navbar").toggle();
+      //cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+      fullScreen();
+    },
+    "Esc": function(cm) {
+      // $("#navbar").show();
+      // if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+      if (cm.getOption("fullScreen")) fullScreen(false);
+    },
+    // tab转空格
+    "Tab": function(cm) {
+      var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+      cm.replaceSelection(spaces);
+    },
+
+    // 折叠代码
+    "Ctrl-Q": function(cm){
+      cm.foldCode(cm.getCursor());
+    },
+
+    // 直接运行
+    "Alt-R": function(cm){
+      run();
+    }
+  },
+});
+
+
+// 对比
+var dv = CodeMirror.MergeView(document.getElementById("compare"), {
+    value: editor.getValue(),
+    //orig: editor.getValue(),
+	//origRight: editor.getValue(),
+    origLeft: editor.getValue(),
+    lineNumbers: true,
+    //mode: "text/html",
+    mode: editor.options.mode,
+    //connect: "align",
+
+  extraKeys: {
+    // 全屏
+    "F11": function(cm) {
+      fullScreen();
+    },
+    "Esc": function(cm) {
+      if (editor.getOption("fullScreen")) fullScreen(false);
+    },
+    // tab转空格
+    "Tab": function(cm) {
+      var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+      cm.replaceSelection(spaces);
+    },
+
+    // 折叠代码
+    "Ctrl-Q": function(cm){
+      cm.foldCode(cm.getCursor());
+    }
+  },
+    collapseIdentical: false
+});
+$('#div-compare').hide();
+
+
+// 保存
+function save(side){
+  var data;
+  if (side == "editor"){
+    data = editor.getValue();
+  }else if (side == "lhs"){
+    data = dv.leftOriginal().getValue();
+  }else if (side == "rhs"){
+    data = dv.editor().getValue();
+  }else{
+    console.log("Error side:"+side)
+    return ;
+  }
+
+  $.post("",
+    {
+      path: '{{ path.replace("\\", "/") }}',
+      content: data
+    },
+      function(data, status){
+      console.log("数据: \n" + data + "\n msg: " + data.msg + "\n状态: " + status);
+      alert(data.result?"成功":"失败:"+data.msg);
+    }
+  );
+}
+
+// $('#save-lhs').on('click', function() { save("lhs"); });
+// $('#save-rhs').on('click', function() { save("rhs"); });
+// $('#save-editor').on('click', function() { save("editor"); });
+
+
+// 编辑和对比切换
+function compareEditor(type){
+    $("#btn-compare").toggle();
+    $("#btn-editor").toggle();
+    $("#div-compare").toggle();
+    $("#div-editor").toggle();
+
+    if (type == "compare"){
+      dv.editor().setValue(editor.getValue());
+    }else{
+      editor.setValue(dv.editor().getValue());
+    }
+}
+
+// $('#btn-compare').on('click', function() { compareEditor("compare"); });
+// $('#btn-editor').on('click', function() { compareEditor("editor"); });
+
+
+// 全屏
+function fullScreen(isFull){
+  if (typeof isFull == 'undefined'){
+    isFull = false;
+  }
+  if (editor.getOption("fullScreen") && !isFull){
+    $("#navbar").show();
+    $("#div-search").show();
+    editor.setOption("fullScreen", false);
+
+    $("#div-compare").css("height", "700px");
+    $(".CodeMirror-merge").css("position", "");
+    $(".CodeMirror-merge").css("height", "700px");
+    $(".CodeMirror").css("height", "700px");
+
+  }else{
+    $("#navbar").hide();
+    $("#div-search").hide();
+    editor.setOption("fullScreen", true);
+
+    if ($("#div-compare").css("display")){
+      $("html").css({"height":"100%"});
+      $("#div-compare").css("height", "100%");
+      $(".CodeMirror").css("height", "100%");
+      $(".CodeMirror-merge").css("height", "99.3%");
+      $(".CodeMirror-merge-pane").css("height", "100%");
+      $(".CodeMirror-merge").css({
+        "position": "fixed",
+        "top": 0, "left": 0, "right": 0, "bottom": 0,
+        "height": "auto"
+      });
+    }
+  }
+}
+// $('#btn-full').on('click', fullScreen);
+
+// 监听按键 ESC F11
+function keyDown(event) {
+  var keyCode = event.keyCode;
+  //var keyChar = String.fromCharCode(event.keyCode);
+  //alert("按键码: " + keyCode + " 字符: " + keyChar);
+  if (keyCode == 27 && editor.getOption("fullScreen")){
+    fullScreen(false);
+  }
+
+  //if (keyCode == 122) fullScreen();
+}
+document.onkeydown = keyDown;
+
+
+function run(){
+  $.post("runner",
+    {
+      code: editor.getValue()
+    },
+      function(data, status){
+      console.log("数据: \n" + data + "\n msg: " + data.msg + "\n状态: " + status);
+      alert(data.result?"成功:"+data.msg:"失败:"+data.msg);
+    }
+  );
+}
+</script>
+{% end %}
+
+{% block right %}
+<div class="row" id="div-search" style="padding-bottom: 10px;">
+  <div class="col-sm-10">
+    <form class="form-inline" action="/editor" method="get">
+      <div class="form-group" style="width:60%;" >
+        <!--<label for="path">文件: </label>-->
+        <input type="text" class="form-control" style="width:100%;" name="path" placeholder="文件路径" value="{{ path }}" id="path">
+      </div>
+      <button type="submit" class="btn btn-default">确定</button>
+    </form>
+  </div>
+  <div class="col-sm-2">
+      <!--<button class="btn btn-default" id="btn-full" onclick="fullScreen()">全屏</button>-->
+      <button class="btn btn-default" id="btn-compare" onclick="compareEditor('compare')">对比</button>
+      <button class="btn btn-primary" id="btn-editor" onclick="compareEditor('editor')" style="display:none;">编辑</button>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="save-editor" onclick="save('editor')">保存</button>
+      <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+          <span class="sr-only">切换下拉菜单</span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        <li><a id="save-lhs" onclick="save('lhs')">保存左边/还原</a></li>
+        <li><a id="save-rhs" onclick="save('rhs')">保存右边</a></li>
+        <li class="divider"></li>
+        <li><a id="run" onclick="run()">直接运行(Alt-R)</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="row" id="div-editor">
+  <textarea id="editor" style="display:none;">{{ content }}</textarea>
+</div>
+<div class="row" id="div-compare">
+  <div id="compare"></div>
+</div>
+{% end %}

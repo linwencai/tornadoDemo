@@ -1,0 +1,108 @@
+{% extends "index.html" %}
+
+{% block right %}
+<!--<h2 class="sub-header">Section title</h2>-->
+{% include alert.html %}
+<div class="table-responsive" style="padding-bottom: 20px;"> <!-- 防止点击下拉框时出现滚动条 -->
+    <table class="table table-bordered table-hover">
+        <thead>
+        <tr>
+            <th>定时器</th>
+            <th>函数</th>
+            <th>上次运行时间</th>
+            <!--<th>上次结束时间</th>-->
+            <th>结果</th>
+            <th>状态</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% import time as time %}
+        {% for timer in timerList %}
+        <tr>
+            <td>{{ str(timer) }}</td>
+            <td>{{ timer.func.__module__ }}.{{ timer.func.__name__ }}</td>
+            <td>
+                {{ time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timer.lastStartTime)) }}
+                ({{ "{0:.2f}s".format(timer.lastEndTime - timer.lastStartTime) }})
+            </td>
+            <!--<td>{{ time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timer.lastEndTime)) }}</td>-->
+
+            <td>
+            {% if "err" in str(timer.result).lower() %}
+                <span class="bg-danger">{{ timer.result }}</span>
+            {% elif "success" in str(timer.result).lower() %}
+                <span class="bg-success">{{ timer.result }}</span>
+            {% elif "Future" in str(timer.result) %}
+                <span class="bg-info">{{ timer.result }}</span>
+            {% else %}
+                {{ timer.result }}
+            {% end %}
+            </td>
+
+            <td>
+                <!--{% if timer.is_running() %}-->
+                <!--<a href="/timer/stop/{{ timer.id }}" class="btn btn-success btn-xs">运行中</a>-->
+                <!--{% else %}-->
+                <!--<a href="/timer/start/{{ timer.id }}" class="btn btn-danger btn-xs">停止中</a>-->
+                <!--{% end %}-->
+            <div class="dropdown">
+                <a class="dropdown-toggle btn btn-xs {{ 'btn-success' if timer.is_running() else 'btn-danger' }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {{ '运行中' if timer.is_running() else '停止中' }}
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dLabel">
+                    <li class="{{ 'disabled' if timer.is_running() else '' }}">
+                        <a onclick="dropDownClick({{ timer.id }}, 'start')">启动</a>
+                    </li>
+                    <li class="{{ 'disabled' if not timer.is_running() else '' }}">
+                        <a onclick="dropDownClick({{ timer.id }}, 'stop')">停止</a>
+                    </li>
+                    <li>
+                        <a onclick="dropDownClick({{ timer.id }}, 'run')">立即执行</a>
+                    </li>
+                </ul>
+            </div>
+            </td>
+        </tr>
+        {% end %}
+        </tbody>
+    </table>
+    {% include pagination.html %}
+</div>
+{% end %}
+
+{% block js %}
+<script>
+function dropDownClick(timerId, action)
+{
+    /*
+    // post ajax
+    $.post("",
+    {
+        timerId: timerId,
+        action: action
+    },
+        function(data, status){
+        alert("数据: \n" + data + "\n状态: " + status);
+    });
+    */
+
+    // post form
+    var ExportForm = document.createElement("FORM");
+    document.body.appendChild(ExportForm);
+    ExportForm.method = "POST";
+    var newElement = document.createElement("input");
+    newElement.setAttribute("name", "timerId");
+    newElement.setAttribute("type", "hidden");
+    var newElement2 = document.createElement("input");
+    newElement2.setAttribute("name", "action");
+    newElement2.setAttribute("type", "hidden");
+    ExportForm.appendChild(newElement);
+    ExportForm.appendChild(newElement2);
+    newElement.value = timerId;
+    newElement2.value = action;
+    ExportForm.action = "";
+    ExportForm.submit();
+}
+</script>
+{% end %}

@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>TornadoDemo</title>
+{% end %}
+
+{% block baseCss %}
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="{{ static_url('css/ie10-viewport-bug-workaround.css') }}" rel="stylesheet">
+
+    <link href="{{ static_url('css/index.css') }}" rel="stylesheet">
+{% end block baseCss %}
+
+{% block headerJs %}
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="{{ static_url('js/ie8-responsive-file-warning.js') }}"></script><![endif]-->
+    <script src="{{ static_url('js/ie-emulation-modes-warning.js') }}"></script>
+{% end block headerJs %}
+
+{% block body %}
+<div id="div-container" class="container">
+{% block top %}
+<nav id="navbar" class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-href" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">
+                <img alt="Brand" src="{{ static_url('favicon.ico') }}">
+            </a>
+            <a class="navbar-brand" href="/">TornadoDemo</a>
+        </div>
+        <div id="navbar-href" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+{#                <li class="{{ 'active' if template == 'echarts.html' else '' }}"><a href="/echarts">echarts测试</a></li>#}
+                <li class="{{ 'active' if request.path.startswith('/timer') else '' }}"><a href="/timer">定时器</a></li>
+                <li class="{{ 'active' if request.path.startswith('/editor') else '' }}"><a href="/editor">热更新</a></li>
+                <li class="{{ 'active' if request.path == '/log' else '' }}"><a href="/log">日志</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{ "{0[username]}@{0[ip]}".format(current_user) }}
+                        <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+{#                        <li class="{{ 'active' if request.path == '/user' else '' }}"><a href="/user">用户</a></li>#}
+                        <li class="divider"></li>
+                        <li><a href="/logout">退出</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div><!--/.nav-collapse -->
+    </div><!--/.container-fluid -->
+</nav>
+
+    {% end block top %}
+
+      <div id="right" class="right">
+      {% block right%}
+      <!--<div style="border: 1px solid #ccc!important;padding:14px;border-radius: 16px!important;">-->
+      <table class="table table-hover table-condensed" >
+        <caption>系统信息</caption>
+        <tr>
+          <th rowspan="3" style="min-width: 40px;">服务器</th>
+          <td style="min-width: 70px;">名字</td>
+          <td id="hostname">{{ hostname }}</td>
+        </tr>
+        <tr>
+          <td >IP</td>
+          <td id="ip">{{ ip }}</td>
+        </tr>
+        <tr>
+          <td >时间</td>
+          <td id="timestamp"></td>
+        </tr>
+        <tr>
+          <th rowspan="2">cpu</th>
+          <td>百分比</td>
+          <td id="cpu_percent"></td>
+        </tr>
+        <tr>
+          <td>核数</td>
+          <td id="cpu_count"></td>
+        </tr>
+        <tr>
+          <th rowspan="3">内存</th>
+          <td>百分比</td>
+          <td id="mem_percent"></td>
+        </tr>
+        <tr>
+          <td>使用</td>
+          <td id="mem_used"></td>
+        </tr>
+        <tr>
+          <td>总共</td>
+          <td id="mem_total"></td>
+        </tr>
+        <tr>
+          <th rowspan="3">硬盘</th>
+          <td>百分比</td>
+          <td id="disk_percent"></td>
+        </tr>
+        <tr>
+          <td>使用</td>
+          <td id="disk_used"></td>
+        </tr>
+        <tr>
+          <td>总共</td>
+          <td id="disk_total"></td>
+        </tr>
+        <tr>
+          <th rowspan="4">网络</th>
+          <td>发送</td>
+          <td id="net_sent"></td>
+        </tr>
+        <tr>
+          <td>接收</td>
+          <td id="net_recv"></td>
+        </tr>
+        <tr>
+          <td nowrap="nowrap">发送速度</td>
+          <td id="net_sent_speed"></td>
+        </tr>
+        <tr>
+          <td>接收速度</td>
+          <td id="net_recv_speed"></td>
+        </tr>
+        <tr>
+          <th rowspan="7">进程</th>
+          <td>pid</td>
+          <td id="pid">{{ pid }}</td>
+        </tr>
+        <tr>
+          <td>运行时间</td>
+          <td id="run_time"></td>
+        </tr>
+        <tr>
+          <td>cpu</td>
+          <td id="cpu_process"></td>
+        </tr>
+        <tr>
+          <td>内存</td>
+          <td id="mem_process"></td>
+        </tr>
+        <tr>
+          <td>线程数</td>
+          <td id="thread"></td>
+        </tr>
+        <tr>
+          <td>工作目录</td>
+          <td id="curdir">{{ curdir }}</td>
+        </tr>
+        <tr>
+          <td>命令行</td>
+          <td id="cmdline">{{ cmdline }}</td>
+        </tr>
+      </table>
+      <!--<div id="cpu_chart" style="width: 1200px;height:600px;"></div>-->
+
+      <table class="table table-hover table-condensed" >
+          <caption>请求状态</caption>
+          <thead>
+             <tr>
+                <th>模块</th>
+                <th>Handler</th>
+                <th>请求次数</th>
+                <th>平均响应时间</th>
+                <th>异常次数</th>
+                <th>警告次数</th>
+             </tr>
+          </thead>
+          <tbody>
+          {% for name, info in sorted(log_info.items()) %}
+            <tr>
+              <td>{{ ".".join(name.split('.')[:-1]) }}</td>
+              <td>{{ name.split('.')[-1] }}</td>
+              <td>{{ info.get('count') }}</td>
+              <td>{{ "%0.2f" % (info.get('time', 0) * 1000 / info.get('count', 1)) }} ms</td>
+              <td>
+                  {% if info.get('error') %}
+                    <span style="color: #CC0000;">{{ info.get('error') }}</span>
+                  {% else %}
+                    {{ info.get('error') }}
+                  {% end %}
+              </td>
+              <td>
+                  {% if info.get('warning') %}
+                    <span style="color: #ff9900;">{{ info.get('warning') }}</span>
+                  {% else %}
+                    {{ info.get('warning') }}
+                  {% end %}
+              </td>
+            </tr>
+          {% end for %}
+          </tbody>
+      </table>
+
+    <script>
+    var socket;
+    function init() {
+        var host = "ws://{{host}}/ws";
+
+        try {
+            socket = new WebSocket(host);
+            socket.onopen = function () {
+                console.log("Connection");
+            };
+            socket.onmessage = function (msg) {
+                console.log(msg.data);
+                var data = JSON.parse(msg.data);
+                // document.getElementById("cpu").innerHTML = "cpu: "+data.cpu+"%";
+                // document.getElementById("memory").innerHTML = "memory: "
+                //    +data.mem_percent+"% "
+                //    +Math.round(data.mem_used/1024/1024)+"M/"
+                //    +Math.round(data.mem_total/1024/1024)+"M";
+
+                //document.getElementById("cpu").innerHTML = data.cpu;
+                //document.getElementById("mem").innerHTML = "memory: "+data.mem_percent
+                //    +" "+data.mem_used+"/"+data.mem_total;
+                //document.getElementById("mem_percent").innerHTML = data.mem_percent;
+                //document.getElementById("mem_used").innerHTML = data.mem_used;
+                //document.getElementById("mem").innerHTML = data.mem_percent;
+
+                //document.getElementById("net").innerHTML = "net: 发送"+data.net[0]+" "+data.net[2]+"/S"
+                //    +" 接收"+data.net[1]+" "+data.net[3]+"/S";
+                //document.getElementById("process").innerHTML = "进程 pid:"+data.pid
+                //    +" cpu:"+data.cpu_process
+                //    +" 内存:"+data.mem_process
+                //    +" 线程:"+data.thread;
+                //document.getElementById("cmdline").innerHTML = "进程路径: "+data.cmdline;
+
+                for (var key in data){
+                    if(!data.hasOwnProperty(key)) continue;
+                    var element = document.getElementById(key);
+                    if (element == null) continue;
+                    element.innerHTML = data[key];
+                }
+            };
+            socket.onclose = function () {
+                console.log("Lose Connection!");
+            };
+        }
+        catch (ex) {
+            log(ex);
+        }
+    }
+    window.onbeforeunload = function () {
+        try {
+            socket.send('quit');
+            socket.close();
+            socket = null;
+        }
+        catch (ex) {
+            console.log(ex);
+        }
+    };
+    init();
+    </script>
+
+    {% end block right%}
+  </div>
+</div>
+{% end block body %}
+
+{% block baseJs %}
+    <!-- Just to make our placeholder images work. Don't actually copy the next line! -->
+    <script src="{{ static_url('js/holder.min.js') }}"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="{{ static_url('js/ie10-viewport-bug-workaround.js') }}"></script>
+{% end block baseJs %}

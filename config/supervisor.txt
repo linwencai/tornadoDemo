@@ -1,0 +1,92 @@
+# 安装
+wget https://pypi.python.org/packages/31/7e/788fc6566211e77c395ea272058eb71299c65cc5e55b6214d479c6c2ec9a/supervisor-3.3.3.tar.gz
+tar zxvf supervisor-3.3.3.tar.gz
+cd supervisor-3.3.3
+python setup.py install
+yum install supervisor
+
+# 编辑配置，生成默认配置echo_supervisord_conf > /etc/supervisord.conf
+vim /etc/supervisord.conf
+
+# 启动
+supervisord -c /etc/supervisord.conf
+
+# 控制命令
+supervisorctl reload  # 重载配置
+supervisorctl start all  # 全部启动
+supervisorctl stop all  # 全部停止
+
+# 配置
+[unix_http_server]
+file=/tmp/supervisor.sock   ; the path to the socket file
+
+[inet_http_server]          ; inet (TCP) server disabled by default
+port=0.0.0.0:9001           ; ip_address:port specifier, *:port for all iface
+username=hiac               ; default is no username (open server)
+password=1212               ; default is no password (open server)
+
+[supervisord]
+logfile=/tmp/supervisord.log ; main log file; default $CWD/supervisord.log
+logfile_maxbytes=50MB        ; max main logfile bytes b4 rotation; default 50MB
+logfile_backups=10           ; # of main logfile backups; 0 means none, default 10
+loglevel=info                ; log level; default info; others: debug,warn,trace
+pidfile=/tmp/supervisord.pid ; supervisord pidfile; default supervisord.pid
+nodaemon=false               ; start in foreground if true; default false
+minfds=1024                  ; min. avail startup file descriptors; default 1024
+minprocs=200                 ; min. avail process descriptors;default 200
+
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+[supervisorctl]
+serverurl=unix:///tmp/supervisor.sock ; use a unix:// URL  for a unix socket
+
+[program:tornado]
+command=python3.4 /home/site/main.py
+directory=/home/site
+user=site
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/site/tornado.log
+loglevel=warn
+
+
+[group:tornadoes]
+programs=tornado-8001,tornado-8002,tornado-8003,tornado-8004
+
+
+[program:tornado-8001]
+command=python3.4 /home/site/main.py --port=8001
+directory=/home/site
+user=site
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/site/tornado.log
+loglevel=warn
+
+[program:tornado-8002]
+command=python3.4 /home/site/main.py --port=8002
+directory=/home/site
+user=site
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/site/tornado.log
+loglevel=warn
+
+[program:tornado-8003]
+command=python3.4 /home/site/main.py --port=8003
+directory=/home/site
+user=site
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/site/tornado.log
+loglevel=warn
+
+[program:tornado-8004]
+command=python3.4 /home/site/main.py --port=8004
+directory=/home/site
+user=site
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/home/site/tornado.log
+loglevel=warn

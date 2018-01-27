@@ -1,0 +1,171 @@
+{% extends "index.html" %}
+
+{% block right %}
+<div class="row">
+        <div id="log" style="width: 100%;height: 800px;background-color: #0c0c0c;overflow:scroll;overflow-x: auto;"></div>
+        <br>
+</div>
+<div class="row">
+    <div class="col-lg-12">
+        <div style="text-align: right;">
+            <label>
+            <select class="input-sm" id="level" onchange="change()">
+                <option value="0">NOTSET</option>
+                <option value="10">DEBUG</option>
+                <option value="20">INFO</option>
+                <option value="30">WARN</option>
+                <option value="40">ERROR</option>
+                <option value="50">FATAL</option>
+                {#
+                <!--<option value="0" {{ 'selected' if level.upper() == 'NOTSET' else ''}}>NOTSET</option>-->
+                <!--<option value="10" {{ 'selected' if level.upper() == 'DEBUG' else ''}}>DEBUG</option>-->
+                <!--<option value="20" {{ 'selected' if level.upper() == 'INFO' else ''}}>INFO</option>-->
+                <!--<option value="30" {{ 'selected' if level.upper() in ('WARN', 'WARNING') else ''}}>WARN</option>-->
+                <!--<option value="40" {{ 'selected' if level.upper() == 'ERROR' else ''}}>ERROR</option>-->
+                <!--<option value="50" {{ 'selected' if level.upper() in ('FATAL', 'CRITICAL') else ''}}>FATAL</option>-->
+                #}
+            </select>
+            </label>
+            <!--<input type="button" class="btn btn-primary btn-sm" value="test" id="test" onclick="test()" >-->
+            <input disabled="disabled" type="button" class="btn btn-primary btn-sm" value="start" id="start" onclick="init()">
+            <input disabled="disabled" type="button" class="btn btn-primary btn-sm" value="stop" id="stop" onclick="stop()" >
+            <input type="button" class="btn btn-sm" value="clear" id="clear" onclick="clearLog()" >
+        </div>
+    </div>
+</div>
+{% end %}
+
+{% block js %}
+<script>
+    var socket;
+    var obj = document.getElementById("log");
+    function htmlEncode(str) {
+        var div = document.createElement("div");
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+    function htmlDecode(str) {
+        var div = document.createElement("div");
+        div.innerHTML = str;
+        return div.innerHTML;
+    }
+    function init() {
+        $("#level").val({{ level }});  // 下拉框默认值
+
+        var host = "ws://{{host}}/log/ws";
+        try {
+            socket = new WebSocket(host);
+            socket.onopen = function () {
+                document.getElementById("log").innerHTML = '';
+                document.getElementById("start").disabled=true;
+                document.getElementById("stop").disabled=false;
+                log('Connected');
+            };
+            socket.onmessage = function (msg) {
+                //日志过多时清屏
+                if (obj.scrollHeight > 10000) {
+                    obj.innerHTML = '';
+                }
+                var msgs = msg.data.split("\r\n");
+                for(var i=0;i<msgs.length;i++){
+                    log(msgs[i]);
+                }
+                obj.scrollTop = obj.scrollHeight;   //滚动条显示最新数据
+            };
+            socket.onclose = function () {
+                log("Lose Connection!");
+                //init();
+                document.getElementById("start").disabled=false;
+                document.getElementById("stop").disabled=true;
+            };
+        }
+        catch (ex) {
+            log(ex);
+        }
+    }
+    window.onbeforeunload = function () {
+        try {
+            socket.send('quit');
+            socket.close();
+            socket = null;
+        }
+        catch (ex) {
+            log(ex);
+        }
+    };
+    function log(msg) {
+        console.log(msg);
+        // var level = document.getElementById("level").value;  // 现在改为服务端控制
+        var level = 0;
+        var color;
+        console.log(typeof msg);
+        if (msg.indexOf("[D") == 0){
+            if (level>10) return;
+            color = "color: #00fff0;";
+        }else if (msg.indexOf("[I") == 0){
+            if (level>20) return;
+            color = "color: #00ff00;";
+        }else if (msg.indexOf("[W") == 0){
+            if (level>30) return;
+            color = "color: #ffCC00;";
+        }else if (msg.indexOf("[E") == 0){
+            if (level>40) return;
+            color = "color: #CC0000;";
+        }else if (msg.indexOf("[C") == 0){
+            if (level>50) return;
+            color = "color: #ff0000;";
+        }else{
+            color = "color: #66fff0;";
+        }
+        obj.innerHTML += '<pre style="background-color: #0c0c0c; margin: 0 0 0; padding: 0; border: hidden;'+color
+                +'"><code>'+ htmlEncode(msg)
+                +'</code></pre>';
+        // obj.scrollTop = obj.scrollHeight;   //滚动条显示最新数据，这里滚动很消耗性能
+    }
+    function stop() {
+        try {
+            log('Close connection!');
+            socket.send('quit');
+            socket.close();
+            socket = null;
+        }
+        catch (ex) {
+            log(ex);
+        }
+        document.getElementById("start").disabled=false;
+        document.getElementById("stop").disabled=true;
+    }
+    function clearLog() {
+        var obj = document.getElementById("log");
+        obj.innerHTML = '';
+    }
+    function change(){
+        var level = document.getElementById("level").value;
+        console.log(level);
+        $.post("",
+        {
+          level: level
+        },
+          function(data, status){
+          console.log("数据: \n" + data + "\n msg: " + data.msg + ":" + data.level + "\n状态: " + status);
+          // alert(data.result?"成功": "失败:" + data.msg + ":" + data.level);
+        }
+      );
+    }
+
+    function test(){
+        console.log(document.getElementById("level").value);
+        $.get("",
+        {
+          test: true
+        },
+          function(data, status){
+          console.log("test");
+        }
+      );
+    }
+
+
+    init();
+</script>
+{% end %}
