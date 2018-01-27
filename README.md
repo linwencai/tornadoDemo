@@ -46,6 +46,8 @@ tornadoDemo是一个web服务端demo，基于[tornado](https://github.com/tornad
   ```
   >>> python main.py
   ```
-2. 用浏览器打开http://127.0.0.1:8000，帐号密码都是admin
+2. 用浏览器打开http://127.0.0.1:8000
+
+   默认帐号密码都是admin
 
  :relaxed:
