@@ -4,8 +4,10 @@ import logging
 import tornado.log
 import tornado.web
 from tornado.websocket import WebSocketHandler
+from tornado.gen import coroutine
+from tornado.web import authenticated
 
-from config import conf
+import conf
 from handler import base
 
 clients = set()
@@ -98,3 +100,10 @@ class WSHandler(WebSocketHandler):
     def on_close(self):
         if self in clients:
             clients.remove(self)
+
+
+class Handler(base.BaseHandler):
+    @authenticated
+    @coroutine
+    def get(self):
+        self.render("handler.html", log_info=self.log_info)

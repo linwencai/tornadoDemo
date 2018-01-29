@@ -29,8 +29,8 @@ class Editor(base.BaseHandler):
                 content = fp.read()
         elif path == "stop":
             content = "from tornado.ioloop import IOLoop\nIOLoop.instance().stop()\nresult['msg']='关闭服务器！'"
-        elif path == "reload":
-            content = "from tornado.autoreload import _reload\n_reload()\nresult['msg']='重启服务器！'"
+        # elif path == "reload":
+        #     content = "from tornado.autoreload import _reload\n_reload()\nresult['msg']='重启服务器！'"
         else:
             content = ""
         kwargs = locals()

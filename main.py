@@ -10,8 +10,8 @@ from tornado.ioloop import IOLoop
 from tornado.options import define, options
 from tornado.web import RequestHandler, Application
 
-from config import conf
-from handler import base
+import conf
+import url
 from manager import timerMgr, utils
 
 
@@ -30,11 +30,14 @@ class ReloadHandler(RequestHandler):
             _reload = importlib.import_module('__builtin__').reload
         logging.info("reload:%r" % _reload(_module))
 
-        server.__init__(base.urls(ReloadHandler), **conf.settings)
+        server.__init__()
         self.write({"result": True, "msg": "reload成功"})
 
 
 class Server(Application):
+    def __init__(self):
+        super(Server, self).__init__(url.urls(ReloadHandler), **conf.settings)
+
     """屏蔽200、300请求日志，方法3，每个handler可自行控制是否显示"""
     def log_request(self, log_handler):
         # if log_handler.get_status() < 300:
@@ -124,7 +127,7 @@ if not any(argv.startswith("--logging") for argv in sys.argv):
 
 define("port", default=8000, help="run on the given port", type=int)
 options.parse_command_line()
-server = Server(base.urls(ReloadHandler), **conf.settings)
+server = Server()
 
 if __name__ == "__main__":
     # 多进程模式，不推荐

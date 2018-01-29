@@ -15,12 +15,12 @@ def coroutine():
 """
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor  # py3标准库，py2:pip install futures
 
 import tornado.ioloop
+from concurrent.futures import ThreadPoolExecutor  # py3标准库，py2:pip install futures
 from tornado.concurrent import Future
 
-from config import conf
+import conf
 
 thread_pool = ThreadPoolExecutor(conf.threads)
 

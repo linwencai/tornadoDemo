@@ -1,0 +1,42 @@
+{% extends "index.html" %}
+
+{% block right%}
+
+<table class="table table-hover table-condensed" >
+{#   <caption>请求状态</caption>  #}
+  <thead>
+     <tr>
+        <th>模块</th>
+        <th>Handler</th>
+        <th>请求次数</th>
+        <th>平均响应时间</th>
+        <th>异常次数</th>
+        <th>警告次数</th>
+     </tr>
+  </thead>
+  <tbody>
+  {% for name, info in sorted(log_info.items()) %}
+    <tr>
+      <td>{{ ".".join(name.split('.')[:-1]) }}</td>
+      <td>{{ name.split('.')[-1] }}</td>
+      <td>{{ info.get('count') }}</td>
+      <td>{{ "%0.2f" % (info.get('time', 0) * 1000 / info.get('count', 1)) }} ms</td>
+      <td>
+          {% if info.get('error') %}
+            <span style="color: #CC0000;">{{ info.get('error') }}</span>
+          {% else %}
+            {{ info.get('error') }}
+          {% end %}
+      </td>
+      <td>
+          {% if info.get('warning') %}
+            <span style="color: #ff9900;">{{ info.get('warning') }}</span>
+          {% else %}
+            {{ info.get('warning') }}
+          {% end %}
+      </td>
+    </tr>
+  {% end for %}
+  </tbody>
+</table>
+{% end block right%}
