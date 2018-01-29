@@ -16,10 +16,7 @@ tornadoDemo是一个异步非阻塞的web框架，基于[tornado](https://github
 * tornado
 * psutil
 * pycryptodome
-* futures[^python2]
-
-
-[^python2]: python2才需要
+* futures [^python2]: python2才需要
 
 
 ## 安装
