@@ -165,7 +165,7 @@ var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
     "Alt-R": function(cm){
       run();
     }
-  },
+  }
 });
 
 
@@ -214,7 +214,7 @@ function save(side){
   }else if (side == "rhs"){
     data = dv.editor().getValue();
   }else{
-    console.log("Error side:"+side)
+    console.log("Error side:"+side);
     return ;
   }
 

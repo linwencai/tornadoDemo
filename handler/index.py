@@ -6,7 +6,7 @@ import os
 
 import psutil
 from tornado.gen import coroutine, Return
-from tornado.httpclient import HTTPClient, HTTPError
+from tornado.httpclient import AsyncHTTPClient, HTTPError
 from tornado.web import authenticated
 from tornado.websocket import WebSocketHandler
 
@@ -22,14 +22,19 @@ process = psutil.Process()
 pid = process.pid
 cmdline = " ".join(process.cmdline())
 curdir = os.path.realpath(os.curdir)
-try:
-    response = HTTPClient().fetch("http://api.k780.com/?app=ip.local").body
-    ip = "|".join(utils.jsonLoad(response)["result"].values())
-except (HTTPError, ValueError) as err:
-    ip = HTTPClient().fetch("http://ltd.qzgame.cc:1009/ip").body
+
+# httpClient = HTTPClient()
+# try:
+#     url = "http://api.k780.com/?app=ip.local&appkey=10003&sign=b59bc3ef6191eb9f747dd4e83c99f2a4"
+#     response = httpClient.fetch(url)
+#     ip = "|".join(utils.jsonLoad(response.body)["result"].values())
+# except (HTTPError, ValueError, KeyError) as err:
+#     # ip = HTTPClient().fetch("http://ltd.qzgame.cc:1009/ip").body
+#     response = httpClient.fetch("http://server.5v5.com/ip")
+#     ip = response.body
 
 
-@cycle("系统信息", 1)
+@cycle("系统信息", 3)
 @coroutine
 def ps():
     if not clients:
@@ -221,9 +226,26 @@ class IndexHandler(base.BaseHandler):
     #               "timestamp": timestamp}
     #     self.write(result)
 
+    @classmethod
+    @coroutine
+    def getIp(cls):
+        try:
+            url = "http://api.k780.com/?app=ip.local&appkey=10003&sign=b59bc3ef6191eb9f747dd4e83c99f2a4"
+            response = yield AsyncHTTPClient().fetch(url, connect_timeout=1, request_timeout=1)
+            ip = "|".join(utils.jsonLoad(response.body)["result"].values())
+        except (HTTPError, ValueError, KeyError) as err:
+            cls.warning(repr(err))
+            response = yield AsyncHTTPClient().fetch("http://server.5v5.com/ip")
+            ip = response.body
+        raise Return(ip)
+
     @authenticated
     @coroutine
     def get(self):
+        # response = yield AsyncHTTPClient().fetch("http://server.5v5.com/ip")
+        # ip = response.body
+        # ip = utils.urlopen("http://server.5v5.com/ip").read()
+        ip = yield self.getIp()
         self.render("index.html", host=self.request.headers.get("Host"), hostname=hostname, hostname_ex=hostname_ex,
                     ip=ip, pid=pid, cmdline=cmdline, curdir=curdir, log_info=self.log_info)
 

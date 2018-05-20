@@ -9,8 +9,8 @@ class BaseHandler(RequestHandler):
     log_status = 400  # 显示日志级别，根据请求状态200、300...
     paginate = 16  # 分页，单页显示条数
 
-    log_info = {}  # 日志信息{模块:{"count":请求次数,"time":累计耗时,"error":错误次数,"warning":警告次数}}
-    _base_log_info = {"count": 0, "time": 0, "error": 0, "warning": 0}
+    log_info = {}  # 日志信息{模块:{"time":耗时,"count":请求次数,"exception":异常数,"error":错误数,"warning":警告数}}
+    _base_log_info = {"time": 0, "count": 0, "exception": 0, "error": 0, "warning": 0}
 
     def get_secure_cookie(self, name, value=None, max_age_days=31, min_version=None):
         # result = super(BaseHandler, self).get_secure_cookie(name, value, max_age_days, min_version)
@@ -39,6 +39,7 @@ class BaseHandler(RequestHandler):
     #     argument = super(BaseHandler, self).get_argument(name, default, strip)
     #     return argument if isinstance(argument, str) or not hasattr(argument, "decode") else argument.decode()
 
+    # log统计
     @classmethod
     def debug(cls, msg, *args, **kwargs):
         return logging.root._log(logging.DEBUG, msg, args, **kwargs)
@@ -49,20 +50,26 @@ class BaseHandler(RequestHandler):
 
     @classmethod
     def warning(cls, msg, *args, **kwargs):
-        logInfo = cls.log_info.setdefault(cls.__module__+"."+cls.__name__, cls._base_log_info.copy())
+        logInfo = cls.log_info.setdefault("%s.%s" % (cls.__module__, cls.__name__), cls._base_log_info.copy())
         logInfo["warning"] = logInfo.get("warning", 0) + 1
         return logging.root._log(logging.WARNING, msg, args, **kwargs)
 
     @classmethod
-    def error(cls, msg, exc_info=True, *args, **kwargs):
-        logInfo = cls.log_info.setdefault(cls.__module__+"."+cls.__name__, cls._base_log_info.copy())
+    def error(cls, msg, *args, **kwargs):
+        logInfo = cls.log_info.setdefault("%s.%s" % (cls.__module__, cls.__name__), cls._base_log_info.copy())
         logInfo["error"] = logInfo.get("error", 0) + 1
-        return logging.root._log(logging.ERROR, msg, args, exc_info, **kwargs)
+        kwargs["exc_info"] = False
+        return logging.root._log(logging.ERROR, msg, args, **kwargs)
 
     @classmethod
-    def exception(cls, msg, exc_info=True, *args, **kwargs):
-        return cls.error(msg, *args, exc_info=exc_info, **kwargs)
+    def exception(cls, msg, *args, **kwargs):
+        logInfo = cls.log_info.setdefault("%s.%s" % (cls.__module__, cls.__name__), cls._base_log_info.copy())
+        logInfo["exception"] = logInfo.get("exception", 0) + 1
+        kwargs["exc_info"] = True
+        return logging.root._log(logging.ERROR, msg, args, **kwargs)
+    # log统计end
 
+    # 请求log统计
     def _log(self):
         key = self.__class__.__module__ + "." + self.__class__.__name__
         logInfo = self.log_info.setdefault(key, self._base_log_info.copy())

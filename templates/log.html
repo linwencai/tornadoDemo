@@ -37,6 +37,70 @@
 
 {% block js %}
 <script>
+
+    // 全屏
+    function fullScreen(isFull){
+        console.log(isFull);
+        if (!isFull){
+            $("#navbar").show();
+            $("#div-search").show();
+
+            $("#log").css("height", "700px");
+        }else{
+            $("#navbar").hide();
+            $("#div-search").hide();
+
+            $("html").css({"height":"100%"});
+            //$("html").css({"height":"100%"});
+            $("#log").css("height", "100%");
+        }
+    }
+    function launchIntoFullscreen(element) {
+        if(element.requestFullscreen){
+            element.requestFullscreen();
+        }
+        else if(element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+        }
+        else if(element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+        }
+        else if(element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        }
+    }
+    function exitFullscreen() {
+        if(document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if(document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if(document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    }
+    var isFull = false;
+    // 监听按键 ESC F11
+    function keyDown(event) {
+        var keyCode = event.keyCode;
+        console.log(keyCode);
+        if (keyCode == 119 ){
+            isFull = !isFull;
+            //fullScreen(isFull);
+            if (isFull){
+                var full=document.getElementById("log");
+                launchIntoFullscreen(full);
+            }else{
+                exitFullscreen();
+            }
+        }
+        if (keyCode == 27){
+            isFull = false;
+            //fullScreen(isFull);
+            exitFullscreen();
+        }
+    }
+    document.onkeydown = keyDown;
+
     var socket;
     var obj = document.getElementById("log");
     function htmlEncode(str) {

@@ -6,7 +6,7 @@ import socket
 
 logLevel = "INFO"  # 日志等级 NOTSET|DEBUG|INFO|WARNING|ERROR
 
-process = False  # 多进程模式 {True:根据cpu核心数，数字:子进程数，False：单进程}
+process = False  # 多进程模式 {True:根据cpu核心数，数字:子进程数，False:单进程}
 # process = not sys.platform.startswith("win")  # 多进程模式，根据平台
 threads = 16  # 线程池数量
 

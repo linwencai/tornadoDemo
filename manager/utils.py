@@ -9,6 +9,7 @@ import time
 import json
 import sys
 import os
+import socket
 # try:
 #     import __builtin__ as builtins  # py2.6
 # except ImportError:
@@ -17,29 +18,41 @@ import os
 try:
     from urllib import urlencode  # py2
     from urlparse import parse_qs
+    from urllib2 import urlopen, Request
 except ImportError:
     from urllib.parse import urlencode, parse_qs   # py3
+    from urllib.request import urlopen, Request
 
-try:
-    # pip install pycrypto
-    from Crypto.Cipher import DES, AES
-    from Crypto.PublicKey import RSA
-    from Crypto.Hash import SHA
-    from Crypto import Random
-    from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
-    from Crypto.Signature import PKCS1_v1_5 as Signature_pkcs1_v1_5
-    # from Crypto.Cipher import PKCS1_OAEP as Cipher_pkcs1_oaep
-    # from Crypto.Signature import PKCS1_PSS as Signature_pkcs1_pss
-except ImportError:
-    # pip install pycryptodome
-    from Cryptodome.Cipher import DES, AES
-    from Cryptodome.PublicKey import RSA
-    from Cryptodome.Hash import SHA
-    from Cryptodome import Random
-    from Cryptodome.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
-    from Cryptodome.Signature import PKCS1_v1_5 as Signature_pkcs1_v1_5
-    # from Cryptodome.Cipher import PKCS1_OAEP as Cipher_pkcs1_oaep
-    # from Cryptodome.Signature import PKCS1_PSS as Signature_pkcs1_pss
+# try:
+#     # pip install pycrypto
+#     from Crypto.Cipher import DES, AES
+#     from Crypto.PublicKey import RSA
+#     from Crypto.Hash import SHA
+#     from Crypto import Random
+#     from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
+#     from Crypto.Signature import PKCS1_v1_5 as Signature_pkcs1_v1_5
+#     # from Crypto.Cipher import PKCS1_OAEP as Cipher_pkcs1_oaep
+#     # from Crypto.Signature import PKCS1_PSS as Signature_pkcs1_pss
+# except ImportError:
+#     # pip install pycryptodome
+#     from Cryptodome.Cipher import DES, AES
+#     from Cryptodome.PublicKey import RSA
+#     from Cryptodome.Hash import SHA
+#     from Cryptodome import Random
+#     from Cryptodome.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
+#     from Cryptodome.Signature import PKCS1_v1_5 as Signature_pkcs1_v1_5
+#     # from Cryptodome.Cipher import PKCS1_OAEP as Cipher_pkcs1_oaep
+#     # from Cryptodome.Signature import PKCS1_PSS as Signature_pkcs1_pss
+
+# pip install pycryptodome
+from Crypto.Cipher import DES
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA
+# from Crypto import Random
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
+from Crypto.Signature import PKCS1_v1_5 as Signature_pkcs1_v1_5
+# from Crypto.Cipher import PKCS1_OAEP as Cipher_pkcs1_oaep
+# from Crypto.Signature import PKCS1_PSS as Signature_pkcs1_pss
 
 
 ENCODING = "utf8"  # 字符串编码
@@ -364,18 +377,18 @@ def str2ts(string, timeFormat=DATE_TIME_FORMAT, isSecond=True):
     return int(timestamp)
 
 
-def urlEncode(query):
+def urlEncode(tables):
     """ dict->url encode 转为url编码
-    :param query: dict list tuple
+    :param tables: dict list tuple
     :return: str
     """
     # 解决py2下unicode报错
     # if PY_VER_MAJOR == 2 and sys.getdefaultencoding().lower().replace("-", "") != "utf8":
     if PY_VER_MAJOR == 2:
-        if isinstance(query, dict):
-            query = query.items()
-        query = [(encode(k), encode(v)) for k, v in query]
-    return urlencode(query)
+        if isinstance(tables, dict):
+            tables = tables.items()
+        tables = [(encode(k), encode(v)) for k, v in tables]
+    return urlencode(tables)
 
 
 def urlDecode(query):
@@ -384,6 +397,29 @@ def urlDecode(query):
     :return: dict
     """
     return parse_qs(query)
+
+
+def httpClient(url, method="GET", data=None, jsonData=None, headers=None, timeout=None):
+    if headers is None:
+        headers = {}
+    if jsonData:
+        data = jsonDump(jsonData)
+        headers["Content-Type"] = "application/json"
+
+    if data:
+        data = urlEncode(data)
+        if method.upper() == "GET":
+            url += "?" + data
+            data = None
+        else:
+            data = encode(data)
+
+    req = Request(url, data=data, headers=headers)
+    if timeout:
+        response = urlopen(req, timeout=timeout)
+    else:
+        response = urlopen(req)
+    return decode(response.read())
 
 
 if __name__ == "__main__":
@@ -480,10 +516,30 @@ if __name__ == "__main__":
     # print("字符串转时间戳", str2ts(ts2str()))
 
     # ### url编码 ###
-    urlData = {123: 123, "b": b'\xe4\xb8\xad\xe6\x96\x87', u"c": u"中文"}
-    urlCode = urlEncode(urlData)
-    print(type(urlCode), urlCode)
-    print(urlDecode(urlCode))
+    # urlData = {123: 123, "b": b'\xe4\xb8\xad\xe6\x96\x87', u"c": u"中文"}
+    # urlCode = urlEncode(urlData)
+    # print(type(urlCode), urlCode)
+    # print(urlDecode(urlCode))
+
+    # ### httpClient ###
+    # print(urlopen("http://server.5v5.com/ip").read())
+    # print(httpClient("http://server.5v5.com/ip"))
+    # print(decode(httpClient("http://192.168.1.101:80/", data={"a": "b"}, headers={"c": "d"}, method="GET")))
+    # print(decode(httpClient("http://192.168.1.101:80/", data={"a": "b"}, headers={"c": "d"}, method="POST")))
+    # import socket
+    # try:
+    #     print(httpClient("http://192.168.1.112:8000/sleep/1", timeout=1))
+    # except socket.timeout:
+    #     print("timeout")
+
+    # tornado5.0的HttpClient在IOLoop中会报错
+    # from tornado.httpclient import HTTPClient, AsyncHTTPClient
+    # from tornado.ioloop import IOLoop
+    # from tornado.gen import coroutine
+    # ioloop = IOLoop.current()
+    # print(HTTPClient().fetch("http://server.5v5.com/ip").body)  # 不在ioloop中会报错
+    # # ioloop.call_later(0, lambda: HTTPClient().fetch("http://server.5v5.com/ip"))  # 在ioloop中会报错
+    # ioloop.start()
 
     # ### 性能测试 ###
     import timeit

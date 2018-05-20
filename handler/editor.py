@@ -66,10 +66,10 @@ class Editor(base.BaseHandler):
             else:
                 result = {"result": True, "msg": "保存成功"}
         except HTTPError as err:
-            logging.warning(u"reload异常:%s" % err)
+            self.warning(u"reload异常:%s", err)
             result["msg"] = u"reload异常"
         except Exception as err:
-            logging.error(u"%s" % err, exc_info=1)
+            self.exception(u"%s" % err)
             result["msg"] = u"保存失败：%s" % err
 
         self.write(result)

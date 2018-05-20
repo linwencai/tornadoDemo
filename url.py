@@ -13,7 +13,7 @@ def urls(ReloadHandler):
         from handler import log
         url.extend([(r"/log", log.LogHandler),
                     (r"/log/ws", log.WSHandler),
-                    (r"/log/handler", log.Handler),
+                    (r"/log/status", log.StatusHandler),
                     ])
 
         from handler import index, user, timer, test

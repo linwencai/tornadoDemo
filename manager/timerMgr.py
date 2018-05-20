@@ -15,9 +15,10 @@ def coroutine():
 """
 import logging
 import time
-
-import tornado.ioloop
 from concurrent.futures import ThreadPoolExecutor  # py3标准库，py2:pip install futures
+
+import tornado
+import tornado.ioloop
 from tornado.concurrent import Future
 
 import conf
@@ -46,12 +47,17 @@ class _Cycle(tornado.ioloop.PeriodicCallback):
         self.count = 0  # 运行次数
         self.isStart = isStart  # 是否启动，否则需要手动启动
 
-        # io_loop=True防止多进程模式报错
-        super(_Cycle, self).__init__(self.run, _interval, io_loop=True)
-        self.io_loop = tornado.ioloop.IOLoop.current(False)
-        if isStart and self.io_loop:
-            self.start()
-
+        # tornado5以下，io_loop=True防止多进程模式报错
+        if tornado.version_info[0] < 5:
+            super(_Cycle, self).__init__(self.run, _interval, io_loop=True)
+            self.io_loop = tornado.ioloop.IOLoop.current(False)
+            if isStart and self.io_loop:
+                self.start()
+        else:
+            super(_Cycle, self).__init__(self.run, _interval)
+            if isStart:
+                self.start()
+            
         # super(_Cycle, self).__init__(self.run, _interval)
         return
 
@@ -65,7 +71,7 @@ class _Cycle(tornado.ioloop.PeriodicCallback):
 
         # 防止多进程模式报错
         # self.io_loop = tornado.ioloop.IOLoop.current(False)
-        if self.io_loop is True:
+        if tornado.version_info[0] < 5 and self.io_loop is True:
             return
 
         return super(_Cycle, self).start()
@@ -93,7 +99,8 @@ class _Cycle(tornado.ioloop.PeriodicCallback):
         :param isStart: 是否立即执行
         :return:
         """
-        if isinstance(self.result, Future) and self.result.running() and not isStart:
+        # if isinstance(self.result, Future) and self.result.running() and not isStart:
+        if isinstance(self.result, Future) and not self.result.done() and not isStart:
             logging.error("Cycle Future:%s is running:%ss" % (self.func.__name__, time.time()-self.lastStartTime))
             return
 
@@ -233,7 +240,8 @@ class _Cron(_Cycle):
         if not self.checkTime(timestamp) and not isStart:
             return
 
-        if isinstance(self.result, Future) and self.result.running() and not isStart:
+        # if isinstance(self.result, Future) and self.result.running() and not isStart:
+        if isinstance(self.result, Future) and not self.result.done() and not isStart:
             logging.error("Cron Future:%s is running:%ss" % (self.func.__name__, timestamp-self.lastStartTime))
             return
 
