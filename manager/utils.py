@@ -9,7 +9,10 @@ import time
 import json
 import sys
 import os
+import re
 import socket
+import logging
+import datetime
 # try:
 #     import __builtin__ as builtins  # py2.6
 # except ImportError:
@@ -290,15 +293,16 @@ class Rsa:
         return self.verify(msg, sign)
 
 
-def jsonDump(obj, ensure_ascii=True, default=decode):
+def jsonDump(obj, ensure_ascii=True, default=decode, indent=None):
     """obj->json unicode
     :param obj: dict or list
     :param ensure_ascii: 保留编码
     :param default: 特殊对象处理方式
+    :param indent: 缩进
     :return json字符串(unicode)
     """
     if PY_VER_MAJOR == 3:
-        return json.dumps(obj, ensure_ascii=ensure_ascii, default=default)
+        return json.dumps(obj, ensure_ascii=ensure_ascii, default=default, indent=indent)
     else:
         # py27下ensure_ascii=False，不能同时有str和bytes
         # return json.dumps(obj, ensure_ascii=ensure_ascii, default=default)
@@ -324,6 +328,17 @@ def ts(isSecond=True):
     :return: 时间戳 int
     """
     return int(time.time() if isSecond else time.time()*1000)
+
+
+def tsZeroHour(isSecond=True):
+    """ timestamp 0点时间戳
+    :param isSecond: true为秒，否则为毫秒
+    :return: 时间戳 int
+    """
+    timestamp = int(time.time())
+    timeTuple = time.localtime(timestamp)
+    zeroHourTimestamp = timestamp - timeTuple.tm_hour * 60 * 60 - timeTuple.tm_min * 60 - timeTuple.tm_sec
+    return zeroHourTimestamp if isSecond else zeroHourTimestamp*1000
 
 
 def ts2str(timestamp=None, timeFormat=DATE_TIME_FORMAT, isSecond=True):
@@ -370,8 +385,22 @@ def str2ts(string, timeFormat=DATE_TIME_FORMAT, isSecond=True):
     """
     if isinstance(timeFormat, bytes):
         timeFormat = timeFormat.decode("utf8")
-    timeTuple = time.strptime(string, timeFormat)
-    timestamp = time.mktime(timeTuple)
+    if "%z" in timeFormat:
+        if PY_VER_MAJOR == 2:  # py2不支持时区%z格式化，可用第三方库pytz
+            matches = re.findall(r'[+-]\d{2}:?\d{2}', string)
+            timezoneStr = matches[0]
+            timeTuple = time.strptime(string.replace(timezoneStr, ""), timeFormat.replace("%z", ""))
+            timestamp = time.mktime(timeTuple)
+            timezoneInt = int(timezoneStr.replace(":", "")[1:])
+            timezoneHour, timezoneMinute = divmod(timezoneInt, 100)
+            timeOffset = timezoneHour*3600 + timezoneMinute * 60 + time.timezone
+            timestamp -= timeOffset if timezoneStr[0] == "+" else -timeOffset
+        else:
+            datetimeObj = datetime.datetime.strptime(string, timeFormat)
+            timestamp = datetimeObj.astimezone().timestamp()
+    else:
+        timeTuple = time.strptime(string, timeFormat)
+        timestamp = time.mktime(timeTuple)
     if isSecond is False:
         timestamp *= 1000
     return int(timestamp)
@@ -514,6 +543,9 @@ if __name__ == "__main__":
     # print("当前时间戳 秒: %s 毫秒:%s" % (ts(), ts(False)))
     # print("时间戳转字符串", ts2str(ts(), "%Y-%m-%d %H:%M:%S"), ts2dateStr(), ts2timeStr())
     # print("字符串转时间戳", str2ts(ts2str()))
+    print("带时区的字符串转时间戳", str2ts("2019-04-22 10:00:00 +0800", '%Y-%m-%d %H:%M:%S %z'))
+    print("带时区的字符串转时间戳", str2ts("2019-04-22 10:00:00 +0000", '%Y-%m-%d %H:%M:%S %z'))
+    # datetime.datetime.fromisoformat("2019-04-22T10:00:00+08:00")  # py3.7
 
     # ### url编码 ###
     # urlData = {123: 123, "b": b'\xe4\xb8\xad\xe6\x96\x87', u"c": u"中文"}

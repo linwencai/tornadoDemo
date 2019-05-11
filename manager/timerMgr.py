@@ -36,7 +36,7 @@ class _Cycle(tornado.ioloop.PeriodicCallback):
     间隔调用定时器
     """
     def __init__(self, _name, _func, _interval, isStart, *_args, **_kwargs):
-        self.id = hash(_func)
+        self.id = id(_func)
         self.name = _name
         self.lastStartTime = 0  # 上一次运行时间
         self.lastEndTime = 0  # 上一次运行结束时间
@@ -140,12 +140,12 @@ class _Cron(_Cycle):
     """
     cron定时器
     """
-    def __init__(self, _name, _callback, _second, _minute, hour, _weekday, isStart, *_args, **_kwargs):
+    def __init__(self, _name, _callback, _second, _minute, _hour, _weekday, isStart, *_args, **_kwargs):
         self.second = self.getCron(_second, range(60))
         self.minute = self.getCron(_minute, range(60))
-        self.hour = self.getCron(hour, range(24))
+        self.hour = self.getCron(_hour, range(24))
         self.weekday = self.getCron(_weekday, range(7))
-        self.cronStr = "{} {} {} {}".format(_second, _minute, hour, _weekday)
+        self.cronStr = "{} {} {} {}".format(_second, _minute, _hour, _weekday)
         self.lastCheckTime = time.time()
         super(_Cron, self).__init__(_name, _callback, 1000, isStart, *_args, **_kwargs)
 
@@ -263,7 +263,7 @@ class _Cron(_Cycle):
 
 class TimerDict(dict):
     """
-    全局定时器字典 {func: timer}
+    全局定时器字典 {name: timer}
     重载部分方法和操作符，防止timer内存泄漏
     """
     def stopTimer(self, k, v=None):

@@ -28,12 +28,12 @@ class LoggingHandler(logging.Handler):
 
 
 # 如果reload就删除旧的logHandler
-for logHandler in logger.handlers:
-    # print(handler, handler.__class__.__name__ == "LoggingHandler")
-    if logHandler.__class__.__name__ == "LoggingHandler":
-        logger.removeHandler(logHandler)
+for _logHandler in logger.handlers:
+    # print(_logHandler, _logHandler.__class__.__name__ == "LoggingHandler")
+    if _logHandler.__class__.__name__ == "LoggingHandler":
+        logger.removeHandler(_logHandler)
 # 添加新logHandler
-logger.addHandler(LoggingHandler())
+logger.addHandler(LoggingHandler(conf.logLevel))
 
 
 class LogHandler(base.BaseHandler):
@@ -61,7 +61,13 @@ class LogHandler(base.BaseHandler):
         tornado.log.access_log.setLevel(level)
         tornado.log.app_log.setLevel(level)
         tornado.log.gen_log.setLevel(level)
-        logger.setLevel(level)
+        # logger.setLevel(level)
+
+        # 跳过FileHandler类型
+        for logHandler in logger.handlers:
+            if isinstance(logHandler, logging.FileHandler):
+                continue
+            logHandler.setLevel(level)
 
         conf.logLevel = logging.getLevelName(level)
 

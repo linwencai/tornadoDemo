@@ -5,10 +5,9 @@ import importlib
 import logging
 import sys
 
-import tornado
 import tornado.escape
 from tornado.ioloop import IOLoop
-from tornado.options import define, options
+# from tornado.options import define, options
 from tornado.web import RequestHandler, Application
 
 import conf
@@ -57,7 +56,11 @@ class Server(Application):
         #            log_handler._request_summary(), request_time)
         if log_handler.get_status() < getattr(log_handler, "log_status", 400):
             if conf.logLevel in ("NOTSET", "DEBUG"):
-                logging.debug("%d %s %.2fms", log_handler.get_status(), log_handler._request_summary(),
+                logging.debug("%d %s %s (%s) %.2fms",
+                              log_handler.get_status(),
+                              log_handler.request.method,
+                              log_handler.request.uri,
+                              log_handler.request.remote_ip,
                               1000.0 * log_handler.request.request_time())
             return
         super(Server, self).log_request(log_handler)
@@ -79,15 +82,16 @@ class Server(Application):
 # conf.settings["log_function"] = log_function  # 方法2，每个handler可自行控制是否显示
 
 
-class StreamHandler(logging.StreamHandler):
-    """pycharm控制台颜色"""
-    def emit(self, record):
-        self.stream = sys.stdout if record.levelno < logging.ERROR else sys.stderr
-        super(StreamHandler, self).emit(record)
-
-
-if conf.settings.get("debug"):
-    logging.StreamHandler = StreamHandler
+# 会导致FileHandler报错
+# class StreamHandler(logging.StreamHandler):
+#     """pycharm控制台颜色"""
+#     def emit(self, record):
+#         self.stream = sys.stdout if record.levelno < logging.ERROR else sys.stderr
+#         super(StreamHandler, self).emit(record)
+#
+#
+# if conf.settings.get("debug"):
+#     logging.StreamHandler = StreamHandler
 
 
 # class LogFormatter(tornado.log.LogFormatter):
@@ -125,12 +129,12 @@ if conf.settings.get("debug"):
 # 修复escape.json_encode同时传入bytes和str报错
 tornado.escape.json_encode = lambda msg: utils.jsonDump(msg).replace("</", "<\\/")
 
-# 日志等级，如果没有--logging参数，就使用conf里面的loglevel
-if not any(argv.startswith("--logging") for argv in sys.argv):
-    sys.argv.append("--logging=%s" % conf.logLevel)
-
-define("port", default=8000, help="run on the given port", type=int)
-options.parse_command_line()
+# # 日志等级，如果没有--logging参数，就使用conf里面的loglevel
+# if not any(argv.startswith("--logging") for argv in sys.argv):
+#     sys.argv.append("--logging=%s" % conf.logLevel)
+#
+# define("port", default=conf.port, help="run on the given port", type=int)
+# options.parse_command_line()
 server = Server()
 
 if __name__ == "__main__":
@@ -139,14 +143,14 @@ if __name__ == "__main__":
         import tornado.netutil
         import tornado.process
         import tornado.httpserver
-        sockets = tornado.netutil.bind_sockets(options.port)
+        sockets = tornado.netutil.bind_sockets(conf.port)
         tornado.process.fork_processes(conf.process if isinstance(conf.process, int) else 0)
         httpServer = tornado.httpserver.HTTPServer(server)
         httpServer.add_sockets(sockets)
     else:
         # 单进程
-        server.listen(options.port)
+        server.listen(conf.port)
 
     timerMgr.initIOLoop()
-    print("Tornado%s is running on http://127.0.0.1:%d" % (tornado.version, options.port))
+    print("Tornado%s is running on http://127.0.0.1:%d" % (tornado.version, conf.port))
     IOLoop.instance().start()

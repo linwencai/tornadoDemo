@@ -8,7 +8,7 @@ from tornado.httpclient import AsyncHTTPClient, HTTPError
 from tornado.web import authenticated
 
 from handler import base
-
+import conf
 
 class Editor(base.BaseHandler):
     @authenticated
@@ -60,7 +60,7 @@ class Editor(base.BaseHandler):
             if ext == ".py":
                 modulePath = dirPath.replace("\\", ".").replace("/", ".")
                 http_client = AsyncHTTPClient()
-                response = yield http_client.fetch("http://127.0.0.1:8000/reload/"+modulePath,
+                response = yield http_client.fetch("http://127.0.0.1:%s/reload/%s" % (conf.port, modulePath),
                                                    connect_timeout=10, request_timeout=10)
                 result = json.loads(response.body.decode())
             else:

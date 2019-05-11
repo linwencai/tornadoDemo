@@ -31,7 +31,7 @@ def urls(ReloadHandler):
                     (r"/redirect", test.Redirect),
                     # (r"/(apple-touch-icon\.png)", tornado.web.StaticFileHandler, dict(path=settings['static_path'])),
 
-                    (r"/.*", test.Test),
+                    (r"/.*", test.Test),  # 测试，匹配任意地址，要放最后！
                     ])
     except Exception as err:
         logging.exception("handler err:%s" % err)

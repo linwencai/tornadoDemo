@@ -3,7 +3,9 @@ import logging
 
 from tornado.httputil import urlencode
 from tornado.web import RequestHandler
+from tornado.gen import coroutine
 
+from manager import utils
 
 class BaseHandler(RequestHandler):
     log_status = 400  # 显示日志级别，根据请求状态200、300...
@@ -23,17 +25,17 @@ class BaseHandler(RequestHandler):
                 "ip": self.get_secure_cookie("ip")}
         return user if user["username"] else None
 
-    def render(this, template_name, **kwargs):
+    def render(_self, template_name, **kwargs):
         kwargs["template"] = template_name
         if "self" in kwargs:
             kwargs.pop("self")
 
         # 分页链接保留get查询参数
-        page_query = urlencode([(k, v[0]) for k, v in this.request.query_arguments.items() if k != "page"])
+        page_query = urlencode([(k, v[0]) for k, v in _self.request.query_arguments.items() if k != "page"])
         kwargs["page_query"] = "?page=" if len(page_query) == 0 else "?%s&page=" % page_query
 
-        # return super(BaseHandler, self).render(template_name, **kwargs)  # reload会报错
-        return RequestHandler.render(this, template_name, **kwargs)
+        # return super(BaseHandler, _self).render(template_name, **kwargs)  # reload会报错
+        return RequestHandler.render(_self, template_name, **kwargs)
 
     # def get_argument(self, name, default=None, strip=True):
     #     argument = super(BaseHandler, self).get_argument(name, default, strip)
@@ -85,3 +87,36 @@ class BaseHandler(RequestHandler):
 
         # super(BaseHandler, self)._log()
         return RequestHandler._log(self)
+
+
+class BaseAPIHandler(BaseHandler):
+    result = {}
+
+    def initialize(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.result = {"result": False, "code": 0, "message": ""}
+        return super().initialize()
+
+    def write_error(self, status_code, **kwargs):
+        result = {"result": False, "code": status_code, "message": self._reason}
+        self.write(result)
+        self.finish()
+
+    def prepare(self):
+        # 处理json格式请求参数
+        if "application/json" in self.request.headers.get("Content-Type", ""):
+            # self.debug("初始化json请求参数:%s", self.request.body)
+            try:
+                jsonData = utils.jsonLoad(self.request.body)
+                for k, v in jsonData.items():
+                    if k in self.request.arguments:
+                        self.request.arguments[k].append(v)
+                    else:
+                        self.request.arguments[k] = [v]
+            except ValueError as err:
+                self.error("初始化json请求参数出错:%s body:%s" % (err, self.request.body))
+        return super().prepare()
+
+    @coroutine
+    def get(self):
+        yield self.post()

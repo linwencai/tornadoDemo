@@ -41,14 +41,16 @@
 {#                <li class="{{ 'active' if template == 'echarts.html' else '' }}"><a href="/echarts">echarts测试</a></li>#}
                 <li class="{{ 'active' if request.path.startswith('/timer') else '' }}"><a href="/timer">定时器</a></li>
                 <li class="{{ 'active' if request.path.startswith('/editor') else '' }}"><a href="/editor">热更新</a></li>
+                <li class="{{ 'active' if request.path == '/log' else '' }}"><a href="/log">日志</a></li>
+                <li class="{{ 'active' if request.path == '/log/status' else '' }}"><a href="/log/status">统计</a></li>
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         {{ "{0[username]}@{0[ip]}".format(current_user) }}
                         <span class="caret"></span></a>
                     <ul class="dropdown-menu">
-{#                        <li class="{{ 'active' if request.path == '/user' else '' }}"><a href="/user">用户</a></li>#}
+{#                        <li class="{{ 'active' if request.path == '/user' else '' }}"><a href="/user">用户</a></li>
                         <li class="{{ 'active' if request.path == '/log' else '' }}"><a href="/log">日志</a></li>
-                        <li class="{{ 'active' if request.path == '/log/status' else '' }}"><a href="/log/status">统计</a></li>
+                        <li class="{{ 'active' if request.path == '/log/status' else '' }}"><a href="/log/status">统计</a></li>#}
                         <li class="divider"></li>
                         <li><a href="/logout">退出</a></li>
                     </ul>

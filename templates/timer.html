@@ -11,6 +11,7 @@
             <th>函数</th>
             <th>上次运行时间</th>
             <!--<th>上次结束时间</th>-->
+            <th>耗時</th>
             <th>结果</th>
             <th>状态</th>
         </tr>
@@ -23,9 +24,9 @@
             <td>{{ timer.func.__module__ }}.{{ timer.func.__name__ }}</td>
             <td>
                 {{ time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timer.lastStartTime)) }}
-                ({{ "{0:.2f}s".format(timer.lastEndTime - timer.lastStartTime) }})
             </td>
             <!--<td>{{ time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timer.lastEndTime)) }}</td>-->
+            <td>{{ "{0:.2f}s".format(timer.lastEndTime - timer.lastStartTime) }}</td>
 
             <td>
             {% if "err" in str(timer.result).lower() %}

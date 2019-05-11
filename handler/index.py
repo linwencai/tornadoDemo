@@ -5,10 +5,11 @@ import time
 import os
 
 import psutil
+from tornado.ioloop import IOLoop
 from tornado.gen import coroutine, Return
-from tornado.httpclient import AsyncHTTPClient, HTTPError
 from tornado.web import authenticated
 from tornado.websocket import WebSocketHandler
+from tornado.httpclient import AsyncHTTPClient
 
 from handler import base
 from manager import utils
@@ -23,18 +24,35 @@ pid = process.pid
 cmdline = " ".join(process.cmdline())
 curdir = os.path.realpath(os.curdir)
 
-# httpClient = HTTPClient()
 # try:
-#     url = "http://api.k780.com/?app=ip.local&appkey=10003&sign=b59bc3ef6191eb9f747dd4e83c99f2a4"
-#     response = httpClient.fetch(url)
-#     ip = "|".join(utils.jsonLoad(response.body)["result"].values())
-# except (HTTPError, ValueError, KeyError) as err:
-#     # ip = HTTPClient().fetch("http://ltd.qzgame.cc:1009/ip").body
-#     response = httpClient.fetch("http://server.5v5.com/ip")
-#     ip = response.body
+#     response = utils.httpGet("http://ip.taobao.com/service/getIpInfo.php?ip=myip")
+#     ipData = utils.jsonLoad(response)
+#     if ipData["code"] == 0:
+#         ip = " | ".join(ipData["data"].get(key, key) for key in ["ip", "country", "region", "city", "isp"])
+#     else:
+#         # ip = utils.httpGet("http://ltd.qzgame.cc:1009/ip")
+#         ip = utils.httpGet("http://server.5v5.com/ip")
+# except (socket.error, ValueError) as err:
+#     ip = str(err)
+ip = ""
 
 
-@cycle("系统信息", 3)
+@coroutine
+def getIp():
+    global ip
+    http_client = AsyncHTTPClient()
+    response = yield http_client.fetch("http://ip.taobao.com/service/getIpInfo.php?ip=myip")
+    ip = utils.decode(response.body)
+    ipData = utils.jsonLoad(response.body)
+    if ipData["code"] == 0:
+        ip = " | ".join(ipData["data"].get(key, key) for key in ["ip", "country", "region", "city", "isp"])
+    return
+
+
+IOLoop.instance().call_later(1, getIp)
+
+
+@cycle("系统信息", 1)
 @coroutine
 def ps():
     if not clients:
@@ -226,26 +244,9 @@ class IndexHandler(base.BaseHandler):
     #               "timestamp": timestamp}
     #     self.write(result)
 
-    @classmethod
-    @coroutine
-    def getIp(cls):
-        try:
-            url = "http://api.k780.com/?app=ip.local&appkey=10003&sign=b59bc3ef6191eb9f747dd4e83c99f2a4"
-            response = yield AsyncHTTPClient().fetch(url, connect_timeout=1, request_timeout=1)
-            ip = "|".join(utils.jsonLoad(response.body)["result"].values())
-        except (HTTPError, ValueError, KeyError) as err:
-            cls.warning(repr(err))
-            response = yield AsyncHTTPClient().fetch("http://server.5v5.com/ip")
-            ip = response.body
-        raise Return(ip)
-
     @authenticated
     @coroutine
     def get(self):
-        # response = yield AsyncHTTPClient().fetch("http://server.5v5.com/ip")
-        # ip = response.body
-        # ip = utils.urlopen("http://server.5v5.com/ip").read()
-        ip = yield self.getIp()
         self.render("index.html", host=self.request.headers.get("Host"), hostname=hostname, hostname_ex=hostname_ex,
                     ip=ip, pid=pid, cmdline=cmdline, curdir=curdir, log_info=self.log_info)
 
